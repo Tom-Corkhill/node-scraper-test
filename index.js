@@ -21,10 +21,12 @@ function parseEmails(email) {
 }
 
 
-request('https://www.canddi.com/', (error, response, html) => {
-    if(!error && response.statusCode == 200) {
-        const $ = cheerio.load(html);
+for (email of testEmails) {
+    request(parseEmails(email), (error, response, html) => {
+        if(!error && response.statusCode == 200) {
+            const $ = cheerio.load(html);
 
-        console.log(html);
-    }
-});
+            console.log(html);
+        }
+    });
+}
