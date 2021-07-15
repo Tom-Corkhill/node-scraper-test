@@ -2,6 +2,7 @@ const cheerio = require('cheerio');
 const knwl = require('knwl.js');
 const request = require('request');
 
+const knwlInstance = new knwl('english');
 
 // Email Addresses to be tested
 const testEmails = [
@@ -21,12 +22,17 @@ function parseEmails(email) {
 }
 
 
-for (email of testEmails) {
+
+testEmails.forEach(email => {
     request(parseEmails(email), (error, response, html) => {
         if(!error && response.statusCode == 200) {
             const $ = cheerio.load(html);
 
-            console.log(html);
+            knwlInstance.init($.html());
+            let emails = knwlInstance.get('emails');
+            let address = knwlInstance.get('places');
+            let phone = knwlInstance.get('phones');
+            console.log(email + ":", emails, address, phone);
         }
     });
-}
+});
