@@ -4,35 +4,60 @@ const request = require('request');
 
 const knwlInstance = new knwl('english');
 
-// Email Addresses to be tested
-const testEmails = [
-    'tim@canddi.com/',
-    'johnsmith@showsec.co.uk',
-    'janedoe@onvi.com',
-    'alexsmith@vauxhall.co.uk'
-];
 
-function parseEmails(email) {
-    // Split the email and get website to be scraped
-    let split = email.split("@")[1];
+const strInputEmail = 'tim@canddi.com/';
 
-    // Merge website
-    let website = "https://www." + split;
-    return website;
+const objFinalOutput = {
+    arrEmails: [],
+    arrAddresses: [],
+    arrPhones: []
+}
+
+function getDomain(strInputEmail) {
+    let strDomain = "https://www." + strInputEmail.split("@")[1];
+    return strDomain;
+}
+
+function getEmails() {
+    let arrFoundEmails = knwlInstance.get('emails');
+    if (arrFoundEmails) {
+        for (let i = 0; i < arrFoundEmails.length; i++) {
+            if (!objFinalOutput.arrEmails.includes(arrFoundEmails[i].address)) {
+                objFinalOutput.arrEmails.push(arrFoundEmails[i].address);
+            }
+        }
+    } else {
+        objFinalOutput.arrEmails.push("No results found");
+    }
+
+}
+
+function getPhones($) {
+    const text = $.html();
+    const regex = /(((\+\d{1,2}(\s|(\(0\)))?\d{4}|\(?0\d{4}\)?)\s?\d{3}\s?\d{3})|((\+\d{1,2}\s?\d{3}|\(?0\d{3}\)?)\s?\d{3}\s?\d{4})|((\+\d{1,2}\s?\d{2}|\(?0\d{2}\)?)\s?\d{4}\s?\d{4}))(\s?\#(\d{4}|\d{3}))?/gm
+    let arrFoundPhones = text.match(regex);
+    if (arrFoundPhones) {
+        for (let i = 0; i < arrFoundPhones.length; i++) {
+            if(!objFinalOutput.arrPhones.includes(arrFoundPhones[i])) {
+                objFinalOutput.arrPhones.push(arrFoundPhones[i]);
+            }
+        }
+    } else {
+        objFinalOutput.arrPhones.push("No results found");
+    }
+
 }
 
 
+request(getDomain(strInputEmail), (error, response, html) => {
+    if(!error && response.statusCode == 200) {
+        
+        const $ = cheerio.load(html);
+        knwlInstance.init($.html());
 
-testEmails.forEach(email => {
-    request(parseEmails(email), (error, response, html) => {
-        if(!error && response.statusCode == 200) {
-            const $ = cheerio.load(html);
+        getEmails();
+        getPhones($);
 
-            knwlInstance.init($.html());
-            let emails = knwlInstance.get('emails');
-            let address = knwlInstance.get('places');
-            let phone = knwlInstance.get('phones');
-            console.log(email + ":", emails, address, phone);
-        }
-    });
+        console.log(objFinalOutput);
+    }
 });
