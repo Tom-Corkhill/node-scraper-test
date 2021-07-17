@@ -1,11 +1,11 @@
 const cheerio = require('cheerio');
-const knwl = require('knwl.js');
 const request = require('request');
+const knwl = require('knwl.js');
 
 const knwlInstance = new knwl('english');
+knwlInstance.register('internationalPhones', require('./internationalPhones'));
 
-
-const strInputEmail = 'tim@canddi.com/';
+const strInputEmail = 'tim@canddi.com';
 const objFinalOutput = {
     arrEmails: [],
     arrAddresses: [],
@@ -25,25 +25,24 @@ function getEmails() {
                 objFinalOutput.arrEmails.push(arrFoundEmails[i].address);
             }
         }
-    } else {
-        objFinalOutput.arrEmails.push("No results found");
     }
-
 }
 
-function getPhones(strHTML) {
-    const regexValidPhoneNums = /(?<![0-9a-zA-Z])(((\+\d{1,2}(\s|(\(0\)))?\d{4}|\(?0\d{4}\)?)\s?\d{3}\s?\d{3})|((\+\d{1,2}\s?\d{3}|\(?0\d{3}\)?)\s?\d{3}\s?\d{4})|((\+\d{1,2}\s?\d{2}|\(?0\d{2}\)?)\s?\d{4}\s?\d{4}))(\s?\#(\d{4}|\d{3}))?/gm
-    let arrFoundPhones = strHTML.match(regexValidPhoneNums);
+function getAddresses() {
+    let arrFoundAddresses = knwlInstance.get('places');
+    console.log(arrFoundAddresses);
+}
+
+
+function getPhones() {
+    let arrFoundPhones = knwlInstance.get('internationalPhones');
     if (arrFoundPhones) {
         for (let i = 0; i < arrFoundPhones.length; i++) {
-            if(!objFinalOutput.arrPhones.includes(arrFoundPhones[i])) {
-                objFinalOutput.arrPhones.push(arrFoundPhones[i]);
+            if(!objFinalOutput.arrPhones.includes(arrFoundPhones[i].phone)) {
+                objFinalOutput.arrPhones.push(arrFoundPhones[i].phone);
             }
         }
-    } else {
-        objFinalOutput.arrPhones.push("No results found");
     }
-
 }
 
 
@@ -54,8 +53,9 @@ request(getDomain(strInputEmail), (error, response, html) => {
         const strHTML = $.html();
         knwlInstance.init($.html());
 
-        getEmails();          // Uses knwl to parse
-        getPhones(strHTML);   // Does not use knwl to parse
+        getEmails();
+        // getAddresses();
+        getPhones();
 
         console.log(objFinalOutput);
     }
